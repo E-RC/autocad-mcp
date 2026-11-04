@@ -15,8 +15,9 @@ year is a retarget rather than a feature bump.
   whether the bridge is listening, this session's address, uptime, tool count, AutoCAD
   Architecture state and add-in version, and how to connect an agent, with the server path and
   the Claude Code command to copy. It also lists anything that failed to load, and has **Start**
-  and **Stop**. It is modeless and updates the moment the bridge starts or stops, from any
-  button or command. `NODALMCPSTATUS` still prints the status as text, for scripts and agents.
+  and **Stop** and a link to the project on GitHub. It is modeless and updates the moment the
+  bridge starts or stops, from any button or command. `NODALMCPSTATUS` still prints the status
+  as text, for scripts and agents.
 
 ### Changed
 - New ribbon icons: round badges with white glyphs that read on AutoCAD's light and dark themes

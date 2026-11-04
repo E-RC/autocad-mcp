@@ -1,9 +1,11 @@
+using System.Diagnostics;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Markup;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using Nodal.AcadMcp.Contracts;
 using AcApp = Autodesk.AutoCAD.ApplicationServices.Core.Application;
@@ -65,15 +67,16 @@ internal sealed class StatusWindow : Window
         Find<Button>("CloseFooterBtn").Click += (_, _) => Close();
         Find<Button>("StartBtn").Click += (_, _) => OnStart();
         Find<Button>("StopBtn").Click += (_, _) => OnStop();
-        Find<Button>("CopyPathBtn").Click += (_, _) => Copy(AcadMcpProtocol.DefaultServerPath, "Server path copied.");
-        Find<Button>("CopyCommandBtn").Click += (_, _) => Copy(ClaudeCodeCommand, "Claude Code command copied.");
+        Find<Button>("CopyPathBtn").Click += (_, _) => Copy(AcadMcpProtocol.DefaultServerPath, "Path copied");
+        Find<Button>("CopyCommandBtn").Click += (_, _) => Copy(ClaudeCodeCommand, "Command copied");
+        Find<Button>("GitHubBtn").Click += (_, _) => OpenRepository();
 
         // The clock only moves the "running for" line along; state changes arrive as events.
         _clock.Tick += (_, _) => Refresh();
         _feedbackClear.Tick += (_, _) =>
         {
             _feedbackClear.Stop();
-            Find<TextBlock>("Feedback").Text = string.Empty;
+            Find<TextBlock>("Feedback").BeginAnimation(OpacityProperty, new DoubleAnimation(0, TimeSpan.FromMilliseconds(400)));
         };
 
         HttpBridge.StateChanged += OnBridgeStateChanged;
@@ -103,7 +106,7 @@ internal sealed class StatusWindow : Window
         var message = AcadMcpApp.StartBridge();
         if (HttpBridge.IsRunning)
         {
-            ShowFeedback("Bridge started.");
+            ShowFeedback("Started");
             return;
         }
 
@@ -114,7 +117,7 @@ internal sealed class StatusWindow : Window
     private void OnStop()
     {
         AcadMcpApp.StopBridge();
-        ShowFeedback("Bridge stopped. The session token is now invalid.");
+        ShowFeedback("Token revoked", "TextSecondary");
     }
 
     private void Copy(string text, string done)
@@ -127,13 +130,33 @@ internal sealed class StatusWindow : Window
         }
         catch
         {
-            ShowFeedback("The clipboard is busy. Try again.");
+            ShowFeedback("Clipboard busy, try again", "WarningText");
         }
     }
 
-    private void ShowFeedback(string text)
+    private void OpenRepository()
     {
-        Find<TextBlock>("Feedback").Text = text;
+        try
+        {
+            Process.Start(new ProcessStartInfo(AcadMcpProtocol.RepositoryUrl) { UseShellExecute = true });
+        }
+        catch
+        {
+            ShowFeedback("Could not open the browser", "WarningText");
+        }
+    }
+
+    /// <summary>
+    /// A short note in the status card's top right corner, after something done in this window.
+    /// It fades after a few seconds; the card itself carries the lasting state.
+    /// </summary>
+    private void ShowFeedback(string text, string colourKey = "SuccessGreen")
+    {
+        var note = Find<TextBlock>("Feedback");
+        note.BeginAnimation(OpacityProperty, null);   // cancel a fade still running
+        note.Opacity = 1;
+        note.Text = text;
+        note.Foreground = Palette(colourKey);
         _feedbackClear.Stop();
         _feedbackClear.Start();
     }
@@ -396,6 +419,38 @@ internal sealed class StatusWindow : Window
             </Setter>
         </Style>
 
+        <Style x:Key="IconButton" TargetType="Button">
+            <Setter Property="Width" Value="30"/>
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Background" Value="{StaticResource Surface}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource Border}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource SurfaceAlt}"/>
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource CheckOff}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource BorderLight}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <Style x:Key="LinkButton" TargetType="Button">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="{StaticResource Accent}"/>
@@ -519,13 +574,18 @@ internal sealed class StatusWindow : Window
 
             <StackPanel Grid.Row="1" Margin="16">
 
-                <!-- Bridge state: the style guide's status card -->
+                <!-- Bridge state: the style guide's status card. Feedback on this window's own
+                     actions sits in its top right corner and fades. -->
                 <Border x:Name="StateCard" CornerRadius="5" BorderThickness="1" ClipToBounds="True" Margin="0,0,0,12">
                     <Grid>
                         <Border x:Name="StateBar" Width="4" HorizontalAlignment="Left" CornerRadius="5,0,0,5"/>
                         <StackPanel Margin="16,12">
-                            <TextBlock x:Name="StateTitle" FontSize="12.5" FontWeight="SemiBold"
-                                       Foreground="{StaticResource TextPrimary}" TextWrapping="Wrap"/>
+                            <DockPanel>
+                                <TextBlock x:Name="Feedback" DockPanel.Dock="Right" FontSize="11.5" FontWeight="SemiBold"
+                                           VerticalAlignment="Center" Margin="12,0,0,0"/>
+                                <TextBlock x:Name="StateTitle" FontSize="12.5" FontWeight="SemiBold"
+                                           Foreground="{StaticResource TextPrimary}" TextWrapping="Wrap"/>
+                            </DockPanel>
                             <TextBlock x:Name="StateDetail" FontSize="10.5" Margin="0,4,0,0"
                                        Foreground="{StaticResource TextSecondary}" TextWrapping="Wrap"/>
                         </StackPanel>
@@ -591,16 +651,21 @@ internal sealed class StatusWindow : Window
                     </StackPanel>
                 </GroupBox>
 
-                <!-- Footer: status, then the actions. Primary first, Close last. -->
+                <!-- Footer: the project link on the left; the actions on the right, all one
+                     width, primary first and Close last. -->
                 <Grid>
                     <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock x:Name="Feedback" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource SuccessGreen}"
-                               VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,8,0"/>
-                    <StackPanel Grid.Column="1" Orientation="Horizontal">
-                        <Button x:Name="StartBtn" Style="{StaticResource AccentButton}" Margin="0,0,8,0">
+                    <Button x:Name="GitHubBtn" Style="{StaticResource IconButton}" ToolTip="Nodal AcadMcp on GitHub">
+                        <!-- The GitHub mark (Octicons mark-github, MIT), used to link to the project -->
+                        <Path Width="16" Height="16" Stretch="Uniform" Fill="{StaticResource TextPrimary}"
+                              Data="M8,0 C3.58,0 0,3.58 0,8 c0,3.54 2.29,6.53 5.47,7.59 .4,.07 .55,-.17 .55,-.38 0,-.19 -.01,-.82 -.01,-1.49 -2.01,.37 -2.53,-.49 -2.69,-.94 -.09,-.23 -.48,-.94 -.82,-1.13 -.28,-.15 -.68,-.52 -.01,-.53 .63,-.01 1.08,.58 1.23,.82 .72,1.21 1.87,.87 2.33,.66 .07,-.52 .28,-.87 .51,-1.07 -1.78,-.2 -3.64,-.89 -3.64,-3.95 0,-.87 .31,-1.59 .82,-2.15 -.08,-.2 -.36,-1.02 .08,-2.12 0,0 .67,-.21 2.2,.82 .64,-.18 1.32,-.27 2,-.27 .68,0 1.36,.09 2,.27 1.53,-1.04 2.2,-.82 2.2,-.82 .44,1.1 .16,1.92 .08,2.12 .51,.56 .82,1.27 .82,2.15 0,3.07 -1.87,3.75 -3.65,3.95 .29,.25 .54,.73 .54,1.48 0,1.07 -.01,1.93 -.01,2.2 0,.21 .15,.46 .55,.38 A8.013,8.013 0 0 0 16,8 c0,-4.42 -3.58,-8 -8,-8 z"/>
+                    </Button>
+                    <StackPanel Grid.Column="2" Orientation="Horizontal">
+                        <Button x:Name="StartBtn" Style="{StaticResource AccentButton}" Width="100" Margin="0,0,8,0">
                             <StackPanel Orientation="Horizontal">
                                 <Path Width="11" Height="11" Stretch="Uniform" Margin="0,0,7,0" VerticalAlignment="Center"
                                       Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
@@ -608,7 +673,7 @@ internal sealed class StatusWindow : Window
                                 <TextBlock Text="Start" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
-                        <Button x:Name="StopBtn" Style="{StaticResource ModernButton}" Margin="0,0,8,0">
+                        <Button x:Name="StopBtn" Style="{StaticResource ModernButton}" Width="100" Margin="0,0,8,0">
                             <StackPanel Orientation="Horizontal">
                                 <Path Width="10" Height="10" Stretch="Uniform" Margin="0,0,7,0" VerticalAlignment="Center"
                                       Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
@@ -616,7 +681,7 @@ internal sealed class StatusWindow : Window
                                 <TextBlock Text="Stop" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
-                        <Button x:Name="CloseFooterBtn" Style="{StaticResource ModernButton}" Content="Close"/>
+                        <Button x:Name="CloseFooterBtn" Style="{StaticResource ModernButton}" Width="100" Content="Close"/>
                     </StackPanel>
                 </Grid>
             </StackPanel>

@@ -116,9 +116,10 @@ token. Only the one that applies is enabled.
 
 **Status** opens a small window with the bridge's state, this session's address, tool count and
 AutoCAD Architecture state, how to connect an agent (with the server path and the Claude Code
-command to copy), anything that failed to load, and **Start** and **Stop**. It stays open beside
-your drawing and updates the moment the bridge starts or stops, whichever button or command did
-it. `NODALMCP` opens it from the command line; `NODALMCPSTATUS` prints the status as text.
+command to copy), anything that failed to load, **Start** and **Stop**, and a link to this
+project on GitHub. It stays open beside your drawing and updates the moment the bridge starts or
+stops, whichever button or command did it. `NODALMCP` opens it from the command line;
+`NODALMCPSTATUS` prints the status as text.
 
 If you genuinely want the bridge up on every start, put `NODALMCPSTART` in your `acaddoc.lsp`.
 
