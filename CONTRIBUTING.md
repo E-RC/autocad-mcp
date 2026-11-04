@@ -17,7 +17,7 @@ project and I would rather be clear than polite:
 `HttpRequestGuard`, `HttpBridge` and the escape hatches in `EscapeTools` / `CSharpBridge` /
 `LispBridge` sit in front of arbitrary code execution. For anything touching those:
 
-- The tests in `tests/Nodal.AcadMcp.Tests/HttpRequestGuardTests.cs` are the contract. If a
+- The tests in `tests/NodARCH.AcadMcp.Tests/HttpRequestGuardTests.cs` are the contract. If a
   change makes one fail, the change is wrong until proven otherwise.
 - Do not weaken the token, `Host`, `Origin` or `Content-Type` checks for convenience. Read
   [SECURITY.md](SECURITY.md) first — each one is there for a specific, named attack.
@@ -52,8 +52,8 @@ documentation in the repository, and they exist because this API is thinly docum
 ## Building
 
 ```bash
-dotnet build Nodal.AcadMcp.slnx -c Release
-dotnet test tests/Nodal.AcadMcp.Tests
+dotnet build NodARCH.AcadMcp.slnx -c Release
+dotnet test tests/NodARCH.AcadMcp.Tests
 powershell -ExecutionPolicy Bypass -File deploy.ps1
 ```
 
@@ -83,12 +83,12 @@ So, for any test that drives a real AutoCAD:
 - Give every call to the test instance a **15-second timeout**, and **kill the test instance** on
   timeout rather than waiting to see whether it recovers. A hang inside AutoCAD does not end by
   itself, and the bridge cannot interrupt it.
-- Keep the test instance's file out of `%LOCALAPPDATA%\Nodal.AcadMcp\instances` (or stop every
+- Keep the test instance's file out of `%LOCALAPPDATA%\NodARCH.AcadMcp\instances` (or stop every
   MCP client) so nothing else picks the test session up as the newest bridge.
 - Back up the installed bundle before deploying a test build, and restore it byte-for-byte
   afterwards.
 - Test in vanilla AutoCAD as well as ACA: `acad.exe /product ACAD` on a machine that has both.
-  `NODALMCPSTATUS` and `acad_status` should report 159 tools and no load failures in each.
+  `NODARCHSTATUS` and `acad_status` should report 159 tools and no load failures in each.
 
 ## Licence
 

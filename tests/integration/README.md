@@ -6,7 +6,7 @@ The pure test project runs without AutoCAD. These tests require ACA 2027 with th
 
 ```powershell
 python tests/integration/workflow_regression.py `
-  --instance "$env:LOCALAPPDATA\Nodal.AcadMcp\instances\<acad-pid>.json" `
+  --instance "$env:LOCALAPPDATA\NodARCH.AcadMcp\instances\<acad-pid>.json" `
   --drawing "C:\CAD\Test\Scratch.dwg" `
   --report "C:\CAD\Test\workflow-report.json"
 ```

@@ -1,9 +1,15 @@
-# Nodal.AcadMcp
+# NodARCH.AcadMcp
 
 An MCP server that lets a language model drive **AutoCAD 2027** and **AutoCAD Architecture** —
 159 tools covering entities, blocks, annotation, drafting symbols and checks, layouts, sheets and PDF plotting, 3D solids, and
 the full ACA object model: walls, doors, windows, spaces, slabs, roofs, mass elements, column
 grids, structural members, curtain walls, stairs, railings, and generated sections and elevations.
+
+> **NodARCH is Archiplan's derivative of [Nodal.AcadMcp](https://github.com/ed-fos/autocad-mcp)
+> by Ed Foster** (Apache-2.0, see [NOTICE](NOTICE)). It is renamed so it can be installed beside
+> the original: commands are `NODARCH`, `NODARCHSTART`, `NODARCHSTOP` and `NODARCHSTATUS`, files live in
+> `NodARCH.AcadMcp` folders, and the MCP server is registered as `nodarch-acad`. The text below is the
+> upstream README with the names changed; "I" and "my" in it refer to the original author.
 
 > **Status: alpha.** This is one person's tool, shared in case it is useful to someone else. I
 > use it daily on my own drawings; it has rough edges and there is no support promise.
@@ -21,19 +27,19 @@ If you are a model reading this to reach AutoCAD:
 
 1. **Use the MCP tools if you have them** (`acad_status`, `run_csharp` and so on). If the only
    one is `acad_bridge_unavailable`, the bridge is closed: ask the user to click **Start** on the
-   **Nodal MCP** ribbon panel or type `NODALMCPSTART`, then refresh the tool list.
+   **NodARCH MCP** ribbon panel or type `NODARCHSTART`, then refresh the tool list.
 2. **No AutoCAD tools at all?** Use the server exe as a command-line client:
-   `Nodal.AcadMcp.Server.exe call <tool> @args.json`. It finds AutoCAD and sends the session token
+   `NodARCH.AcadMcp.Server.exe call <tool> @args.json`. It finds AutoCAD and sends the session token
    for you; `tools` lists every tool and `help` gives the usage. It is installed at
-   `%LOCALAPPDATA%\Nodal.AcadMcp\server\`. The protocol underneath is under
+   `%LOCALAPPDATA%\NodARCH.AcadMcp\server\`. The protocol underneath is under
    [Raw HTTP fallback](#raw-http-fallback).
 3. **Never drive AutoCAD over COM** (`GetActiveObject("AutoCAD.Application")`). Those calls come
    from outside AutoCAD with no main-thread marshalling and no undo grouping, and one bad
    `AddRegion` call crashed AutoCAD in the middle of a session.
-4. **Read the working rules before drawing:** `Nodal.AcadMcp.Server.exe guide`, or `GET /_guide`
+4. **Read the working rules before drawing:** `NodARCH.AcadMcp.Server.exe guide`, or `GET /_guide`
    on the bridge. An MCP client already receives them as the server's instructions.
 
-The URL that `NODALMCPSTATUS` prints answers `403` on its own: every request needs the token.
+The URL that `NODARCHSTATUS` prints answers `403` on its own: every request needs the token.
 
 ---
 
@@ -44,7 +50,7 @@ that** — it is supported, signed, and installed already.
 
 This exists because it covers ground the first-party server does not:
 
-| | Autodesk's MCP | Nodal.AcadMcp |
+| | Autodesk's MCP | NodARCH.AcadMcp |
 |---|---|---|
 | Tools | 9 | 159 |
 | AutoCAD Architecture | none | 79 tools across walls, doors, windows, spaces, slabs, roofs, masses, grids, members, assemblies, sections |
@@ -75,10 +81,10 @@ If you work in ACA, that second row is the entire reason this repository exists.
 ### From a release
 
 1. Download the release zip and unblock it (right-click → Properties → Unblock).
-2. Copy the `Nodal.AcadMcp.bundle` folder to
+2. Copy the `NodARCH.AcadMcp.bundle` folder to
    `%APPDATA%\Autodesk\ApplicationPlugins\`.
 3. Copy the `server` folder somewhere stable, e.g.
-   `%LOCALAPPDATA%\Nodal.AcadMcp\server`.
+   `%LOCALAPPDATA%\NodARCH.AcadMcp\server`.
 4. Restart AutoCAD.
 
 ### From source
@@ -90,7 +96,7 @@ powershell -ExecutionPolicy Bypass -File deploy.ps1
 ```
 
 That builds both halves, installs the bundle to `%APPDATA%\Autodesk\ApplicationPlugins`, and
-publishes the server to `%LOCALAPPDATA%\Nodal.AcadMcp\server`. Add `-Package` to also produce
+publishes the server to `%LOCALAPPDATA%\NodARCH.AcadMcp\server`. Add `-Package` to also produce
 a distributable zip in `artifacts/`.
 
 The script picks the first `dotnet` that actually has a .NET 10 SDK — checking `PATH` first,
@@ -103,10 +109,10 @@ then `~\.dotnet` and Program Files — rather than the first one it can find. Ov
 
 ### 1. Open the bridge in AutoCAD
 
-Click **Start** on the **Nodal MCP** panel of the **Add-ins** ribbon tab, or type:
+Click **Start** on the **NodARCH MCP** panel of the **Add-ins** ribbon tab, or type:
 
 ```
-NODALMCPSTART
+NODARCHSTART
 ```
 
 **This does not happen automatically, on purpose.** The add-in loads with AutoCAD so the
@@ -118,10 +124,10 @@ token. Only the one that applies is enabled.
 AutoCAD Architecture state, how to connect an agent (with the server path and the Claude Code
 command to copy), anything that failed to load, **Start** and **Stop**, and a link to this
 project on GitHub. It stays open beside your drawing and updates the moment the bridge starts or
-stops, whichever button or command did it. `NODALMCP` opens it from the command line;
-`NODALMCPSTATUS` prints the status as text.
+stops, whichever button or command did it. `NODARCH` opens it from the command line;
+`NODARCHSTATUS` prints the status as text.
 
-If you genuinely want the bridge up on every start, put `NODALMCPSTART` in your `acaddoc.lsp`.
+If you genuinely want the bridge up on every start, put `NODARCHSTART` in your `acaddoc.lsp`.
 
 ### 2. Point your MCP client at the server
 
@@ -131,7 +137,7 @@ Claude Desktop (`claude_desktop_config.json`) or Claude Code (`.mcp.json`):
 {
   "mcpServers": {
     "autocad": {
-      "command": "C:\\Users\\YOU\\AppData\\Local\\Nodal.AcadMcp\\server\\Nodal.AcadMcp.Server.exe"
+      "command": "C:\\Users\\YOU\\AppData\\Local\\NodARCH.AcadMcp\\server\\NodARCH.AcadMcp.Server.exe"
     }
   }
 }
@@ -141,7 +147,7 @@ In Claude Code, prefer registering it for every folder over one project's `.mcp.
 only works in that folder and only after you approve it there:
 
 ```bash
-claude mcp add --scope user nodal-acad -- "C:\Users\YOU\AppData\Local\Nodal.AcadMcp\server\Nodal.AcadMcp.Server.exe"
+claude mcp add --scope user nodarch-acad -- "C:\Users\YOU\AppData\Local\NodARCH.AcadMcp\server\NodARCH.AcadMcp.Server.exe"
 ```
 
 No arguments and no environment needed. The server finds the running AutoCAD by reading a
@@ -150,20 +156,20 @@ things — you can launch the MCP client before AutoCAD.
 
 If the bridge is not up, the server reports a single `acad_bridge_unavailable` tool whose
 description tells you what to do, rather than failing silently with an empty list. Once you
-run `NODALMCPSTART`, the real tools appear on the client's next tool listing — most clients
+run `NODARCHSTART`, the real tools appear on the client's next tool listing — most clients
 cache that, so you may need to reconnect the server or restart the client to see them.
 
 ### Troubleshooting
 
 | Symptom | Cause |
 |---|---|
-| `Unknown command "NODALMCPSTART"` on AutoCAD without Architecture, and no **Nodal MCP** panel | Versions up to 0.3.0 failed to start on vanilla AutoCAD. Install 0.3.1 or later. |
-| Some tools missing, or the status window or `NODALMCPSTATUS` says part of the add-in failed to load | They list each part that failed and why; `acad_status` returns the same as `loadFailures`. Please report it with that text. |
-| `Unknown command "NODALMCPSTART"` | The bundle did not load. Check it is at `%APPDATA%\Autodesk\ApplicationPlugins\Nodal.AcadMcp.bundle`, that the zip was unblocked *before* extracting, and that `PackageContents.xml` says `LoadOnAutoCADStartup="true"`. As a fallback, `NETLOAD` the add-in DLL directly. |
-| No **Nodal MCP** ribbon panel | The ribbon is cosmetic and fails silently by design. Check the **Add-ins** tab is enabled; if the Add-ins tab is absent the panel is placed on a **Nodal** tab instead. The commands work either way. |
-| Only `acad_bridge_unavailable` is listed | The bridge is not open in any AutoCAD. Run `NODALMCPSTATUS`. |
-| Tools still missing after `NODALMCPSTART` | Your client cached the tool list. Reconnect the server. |
-| Server is in `.mcp.json` but no AutoCAD tools appear in Claude Code | Claude Code starts a server from a project's `.mcp.json` only once you approve it for that folder, and a session opened in any other folder never sees it. It is the most common reason an agent ends up without the tools. Register it for every folder instead, `claude mcp add --scope user nodal-acad -- "C:\Users\YOU\AppData\Local\Nodal.AcadMcp\server\Nodal.AcadMcp.Server.exe"`, remove the project entry so the two do not shadow each other, and start a new session. Until then, use `Nodal.AcadMcp.Server.exe call` or the [raw HTTP fallback](#raw-http-fallback). |
+| `Unknown command "NODARCHSTART"` on AutoCAD without Architecture, and no **NodARCH MCP** panel | Versions up to 0.3.0 failed to start on vanilla AutoCAD. Install 0.3.1 or later. |
+| Some tools missing, or the status window or `NODARCHSTATUS` says part of the add-in failed to load | They list each part that failed and why; `acad_status` returns the same as `loadFailures`. Please report it with that text. |
+| `Unknown command "NODARCHSTART"` | The bundle did not load. Check it is at `%APPDATA%\Autodesk\ApplicationPlugins\NodARCH.AcadMcp.bundle`, that the zip was unblocked *before* extracting, and that `PackageContents.xml` says `LoadOnAutoCADStartup="true"`. As a fallback, `NETLOAD` the add-in DLL directly. |
+| No **NodARCH MCP** ribbon panel | The ribbon is cosmetic and fails silently by design. Check the **Add-ins** tab is enabled; if the Add-ins tab is absent the panel is placed on a **NodARCH** tab instead. The commands work either way. |
+| Only `acad_bridge_unavailable` is listed | The bridge is not open in any AutoCAD. Run `NODARCHSTATUS`. |
+| Tools still missing after `NODARCHSTART` | Your client cached the tool list. Reconnect the server. |
+| Server is in `.mcp.json` but no AutoCAD tools appear in Claude Code | Claude Code starts a server from a project's `.mcp.json` only once you approve it for that folder, and a session opened in any other folder never sees it. It is the most common reason an agent ends up without the tools. Register it for every folder instead, `claude mcp add --scope user nodarch-acad -- "C:\Users\YOU\AppData\Local\NodARCH.AcadMcp\server\NodARCH.AcadMcp.Server.exe"`, remove the project entry so the two do not shadow each other, and start a new session. Until then, use `NodARCH.AcadMcp.Server.exe call` or the [raw HTTP fallback](#raw-http-fallback). |
 | `403` / "session token is stale" | The bridge restarted. Retry; the server re-reads the token per request. |
 | ACA tools return `aca_unavailable` | Either ACA is not loaded in this session, or the add-in was built on a machine without ACA installed. |
 
@@ -173,7 +179,7 @@ Every tool can be called without an MCP client. The easiest way is the server ex
 does the discovery and the token for you and prints the tool's JSON reply:
 
 ```powershell
-$server = "$env:LOCALAPPDATA\Nodal.AcadMcp\server\Nodal.AcadMcp.Server.exe"
+$server = "$env:LOCALAPPDATA\NodARCH.AcadMcp\server\NodARCH.AcadMcp.Server.exe"
 & $server ping
 & $server tools                      # one line per tool; 'tools create_mleader' for its schema
 & $server call acad_status
@@ -191,9 +197,9 @@ is how whole drawing sessions were driven when the MCP tools failed to load.
   tool with its description, `GET /_ping` checks the bridge is alive, and `GET /_guide` returns
   the working rules an MCP client gets as server instructions.
 - Read the port and token from the instance file the add-in writes,
-  `%LOCALAPPDATA%\Nodal.AcadMcp\instances\<pid>.json`. Take the **newest file whose process is
+  `%LOCALAPPDATA%\NodARCH.AcadMcp\instances\<pid>.json`. Take the **newest file whose process is
   still running**: a crashed AutoCAD leaves its file behind.
-- Send the token as `X-Nodal-Token`. `Host` must be `127.0.0.1:<port>` or `localhost:<port>`, and
+- Send the token as `X-NodARCH-Token`. `Host` must be `127.0.0.1:<port>` or `localhost:<port>`, and
   a request with an `Origin` or `Referer` header is refused. A POST needs
   `Content-Type: application/json`. Anything wrong here gets a bare `403` or `415`.
 - Send the body as UTF-8 **bytes** and decode the reply as UTF-8. Once a request is admitted, the
@@ -209,13 +215,13 @@ is how whole drawing sessions were driven when the MCP tools failed to load.
 ```powershell
 [Net.ServicePointManager]::Expect100Continue = $false
 function Invoke-Acad([string]$Tool, $Arguments = @{}) {
-    $file = Get-ChildItem "$env:LOCALAPPDATA\Nodal.AcadMcp\instances\*.json" |
+    $file = Get-ChildItem "$env:LOCALAPPDATA\NodARCH.AcadMcp\instances\*.json" |
         Where-Object { Get-Process -Id $_.BaseName -ErrorAction SilentlyContinue } |
         Sort-Object LastWriteTime -Descending | Select-Object -First 1
     $instance = [IO.File]::ReadAllText($file.FullName) | ConvertFrom-Json
     $body = [Text.Encoding]::UTF8.GetBytes(($Arguments | ConvertTo-Json -Depth 10 -Compress))
     $reply = Invoke-WebRequest "http://127.0.0.1:$($instance.port)/$Tool" -Method Post `
-        -Headers @{ 'X-Nodal-Token' = $instance.token } -ContentType 'application/json; charset=utf-8' `
+        -Headers @{ 'X-NodARCH-Token' = $instance.token } -ContentType 'application/json; charset=utf-8' `
         -Body $body -UseBasicParsing
     [Text.Encoding]::UTF8.GetString($reply.RawContentStream.ToArray()) | ConvertFrom-Json
 }
@@ -231,7 +237,7 @@ holds the call open; give the client a timeout you can live with.
 ## How it works
 
 ```
-MCP client  ──stdio──▶  Nodal.AcadMcp.Server.exe  ──HTTP/loopback──▶  add-in inside acad.exe
+MCP client  ──stdio──▶  NodARCH.AcadMcp.Server.exe  ──HTTP/loopback──▶  add-in inside acad.exe
                         (thin proxy, owns no                          (owns all 159 tools,
                          tool definitions)                             marshals to main thread)
 ```
@@ -240,7 +246,7 @@ The server is deliberately thin: at list-time it asks the add-in what tools exis
 the answer. **Adding a tool to the add-in needs no server change and no redeploy of the
 server.** The server adds two things. A result carrying an `image` (as `plot_preview`'s and
 `export_drawing_preview`'s do) reaches the model as MCP image content, so it can look at the
-plot. And it sends the working rules (`Nodal.AcadMcp.Server.exe guide` prints them) as the MCP
+plot. And it sends the working rules (`NodARCH.AcadMcp.Server.exe guide` prints them) as the MCP
 server's instructions, which a client puts in front of the model for the whole session.
 
 Run with a verb, the same exe is a command-line client for agents without MCP tools; see
@@ -352,11 +358,11 @@ dotnet build -p:AcadInstallDir="D:\Autodesk\AutoCAD 2027"
 ## Building and testing
 
 ```bash
-dotnet build Nodal.AcadMcp.slnx -c Release
-dotnet test tests/Nodal.AcadMcp.Tests
+dotnet build NodARCH.AcadMcp.slnx -c Release
+dotnet test tests/NodARCH.AcadMcp.Tests
 ```
 
-The tests deliberately reference only `Nodal.AcadMcp.Contracts`, so they run anywhere —
+The tests deliberately reference only `NodARCH.AcadMcp.Contracts`, so they run anywhere —
 including a CI runner with no AutoCAD installed. They cover the admission control in front of
 the code-execution tools; if you touch `HttpRequestGuard`, those tests are the contract.
 
@@ -370,7 +376,7 @@ workflow describes it.
 To build the add-in as CI does, without touching your installed AutoCAD:
 
 ```bash
-dotnet build src/Nodal.AcadMcp.Addin -p:AcadInstallDir="C:\NoSuchDir"
+dotnet build src/NodARCH.AcadMcp.Addin -p:AcadInstallDir="C:\NoSuchDir"
 ```
 
 ---

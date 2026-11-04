@@ -2,7 +2,7 @@
 
 These notes come from one session that drew a small two-sheet architectural set in AutoCAD 2027. The set had plans, a reflected ceiling plan, foundation and roof plans, and four elevations on Arch D sheets from the ACA sheet template. Almost every step went through `run_csharp`, plus a little `run_lisp` and `set_system_variable`. They are the 2D counterpart of the [ACA API lessons](aca-api-lessons.md): implementation notes measured in that drawing, not a general theory of AutoCAD. Imperial units throughout. The drawing scale was 1/4" = 1'-0", so the scale factor is 48 and 3/32" paper text is 4.5 model units.
 
-The last two sections, [Reading the source drawing](#reading-the-source-drawing) and [Drafting conventions](#drafting-conventions), cover mistakes found on review of drawings like that set and of mechanical exercises (orthographic views of an isometric part, and a 3D solid from orthographic views). The short version of all of it is in the bridge's working rules (`Nodal.AcadMcp.Server.exe guide`), which an MCP client receives as the server's instructions.
+The last two sections, [Reading the source drawing](#reading-the-source-drawing) and [Drafting conventions](#drafting-conventions), cover mistakes found on review of drawings like that set and of mechanical exercises (orthographic views of an isometric part, and a 3D solid from orthographic views). The short version of all of it is in the bridge's working rules (`NodARCH.AcadMcp.Server.exe guide`), which an MCP client receives as the server's instructions.
 
 ## run_csharp mechanics worth knowing first
 
@@ -120,7 +120,7 @@ The drawing had last been saved at template state when AutoCAD crashed during a 
 - **Keep every mutation in a replayable file**, one-off settings included. A sysvar, a style tweak or a purge belongs in a stage script, not only in the chat history.
 - **Replay only into a verified starting state.** A full replay into a drawing confirmed to be at template state is fine: empty model space, the template's layer count, no stage blocks. Replaying into a drawing that already holds some stages duplicates them. A rebuild script with a `-From` stage parameter, saving between stages, made both cases easy.
 - AutoCAD's autosave (`%TEMP%\*.sv$`) may hold newer state than the DWG, but it is a fallback to inspect, not a plan.
-- **Never reach AutoCAD over COM.** Driving AutoCAD through `GetActiveObject("AutoCAD.Application")` from another process bypasses the main-thread marshalling and undo grouping, and one `AddRegion` call with a bad argument crashed AutoCAD outright (HRESULT 0x800706BE, "The remote procedure call failed"). Use the tools, `Nodal.AcadMcp.Server.exe call`, or raw HTTP.
+- **Never reach AutoCAD over COM.** Driving AutoCAD through `GetActiveObject("AutoCAD.Application")` from another process bypasses the main-thread marshalling and undo grouping, and one `AddRegion` call with a bad argument crashed AutoCAD outright (HRESULT 0x800706BE, "The remote procedure call failed"). Use the tools, `NodARCH.AcadMcp.Server.exe call`, or raw HTTP.
 
 ## Reading the source drawing
 

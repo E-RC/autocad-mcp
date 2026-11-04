@@ -1,13 +1,13 @@
 ---
 name: aca-modeling
-description: Model and revise native AutoCAD Architecture casework, furniture, slabs and structural trim through Nodal AcadMcp. Use for multi-step ACA drawing work, project options, native geometry verification, or recovery after an interrupted operation.
+description: Model and revise native AutoCAD Architecture casework, furniture, slabs and structural trim through NodARCH AcadMcp. Use for multi-step ACA drawing work, project options, native geometry verification, or recovery after an interrupted operation.
 ---
 
-# ACA modeling with Nodal AcadMcp
+# ACA modeling with NodARCH AcadMcp
 
 Establish the active DWG's full path, units, project and existing entity types before editing. Keep WCS coordinates separate from entity coordinates. A 10-foot dimension is 120 drawing units in an inch drawing; display formatting does not establish the units.
 
-Use the typed workflow tools when available. Without MCP tools, call them through `Nodal.AcadMcp.Server.exe call <tool> @args.json`; never drive AutoCAD over COM. If the bridge is offline, preserve the plan and report the missing connection. Starting the bridge remains an explicit session action. After reconnecting, refresh tools and re-read drawing state; old handles alone do not prove the correct document is open.
+Use the typed workflow tools when available. Without MCP tools, call them through `NodARCH.AcadMcp.Server.exe call <tool> @args.json`; never drive AutoCAD over COM. If the bridge is offline, preserve the plan and report the missing connection. Starting the bridge remains an explicit session action. After reconnecting, refresh tools and re-read drawing state; old handles alone do not prove the correct document is open.
 
 ## Read the source before modeling
 

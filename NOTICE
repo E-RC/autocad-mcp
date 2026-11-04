@@ -1,3 +1,12 @@
+NodARCH
+Modifications Copyright 2026 Archiplan
+
+NodARCH is a modified version of Nodal.AcadMcp (https://github.com/ed-fos/autocad-mcp),
+renamed and changed by Archiplan under the Apache License, Version 2.0. Changed files are
+marked in the git history of this repository. The original notice follows unchanged.
+
+--------------------------------------------------------------------------------
+
 Nodal.AcadMcp
 Copyright 2026 Ed Foster
 
