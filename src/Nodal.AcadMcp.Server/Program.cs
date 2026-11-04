@@ -34,6 +34,26 @@ var http = new HttpClient { Timeout = TimeSpan.FromMinutes(3) };
 
 var PermissiveSchema = JsonSerializer.Deserialize<JsonElement>("""{"type":"object","additionalProperties":true}""");
 
+// Defence for add-ins that still advertise "description": null (or any null member) in a tool's
+// schema: strict MCP clients drop the whole tool. Removing the null members is lossless.
+static JsonElement StripNullMembers(JsonElement schema)
+{
+    var node = System.Text.Json.Nodes.JsonNode.Parse(schema.GetRawText());
+    Strip(node);
+    return JsonSerializer.SerializeToElement(node);
+
+    static void Strip(System.Text.Json.Nodes.JsonNode? n)
+    {
+        if (n is System.Text.Json.Nodes.JsonObject o)
+        {
+            foreach (var key in o.Where(kv => kv.Value is null).Select(kv => kv.Key).ToList()) o.Remove(key);
+            foreach (var kv in o) Strip(kv.Value);
+        }
+        else if (n is System.Text.Json.Nodes.JsonArray a)
+            foreach (var item in a) Strip(item);
+    }
+}
+
 var builder = Host.CreateApplicationBuilder(args);
 
 // stdout IS the MCP transport. Anything written there that is not a framed message corrupts
@@ -92,7 +112,7 @@ builder.Services
                         // Older add-ins do not advertise schemas. New tools can expose their
                         // actual contract without changing discovery for existing tools.
                         InputSchema = item.TryGetProperty("inputSchema", out var schema)
-                            && schema.ValueKind == JsonValueKind.Object ? schema.Clone() : PermissiveSchema,
+                            && schema.ValueKind == JsonValueKind.Object ? StripNullMembers(schema) : PermissiveSchema,
                     });
                 }
             }

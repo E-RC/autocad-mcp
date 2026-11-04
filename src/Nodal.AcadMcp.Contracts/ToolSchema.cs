@@ -14,7 +14,11 @@ public static class ToolSchema
             additionalProperties = false,
             properties = properties.ToDictionary(p => p.Name, p => p.Schema)
         });
-    public static object Text(string? description = null) => new { type = "string", minLength = 1, maxLength = 2048, description };
+    // A null description must be left out, not serialised as "description": null: some MCP clients
+    // (Claude Code among them) reject the whole tool when a schema property is not a string.
+    public static object Text(string? description = null) => description is null
+        ? new { type = "string", minLength = 1, maxLength = 2048 }
+        : Describe(new { type = "string", minLength = 1, maxLength = 2048 }, description);
     public static object Number(double minimum = -1e12, double maximum = 1e12) => new { type = "number", minimum, maximum };
     public static object Flag() => new { type = "boolean" };
     public static object Choice(params string[] values) => new Dictionary<string, object> { ["type"] = "string", ["enum"] = values };
