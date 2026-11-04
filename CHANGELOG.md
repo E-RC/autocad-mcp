@@ -10,6 +10,20 @@ year is a retarget rather than a feature bump.
 
 ## [Unreleased]
 
+### Added
+- A status window, opened by the ribbon's **Status** button or the `NODALMCP` command. It shows
+  whether the bridge is listening, this session's address, uptime, tool count, AutoCAD
+  Architecture state and add-in version, and how to connect an agent, with the server path and
+  the Claude Code command to copy. It also lists anything that failed to load, and has **Start**
+  and **Stop** and a link to the project on GitHub. It is modeless and updates the moment the
+  bridge starts or stops, from any button or command. `NODALMCPSTATUS` still prints the status
+  as text, for scripts and agents.
+
+### Changed
+- New ribbon icons: round badges with white glyphs that read on AutoCAD's light and dark themes
+  alike, drawn at twice their pixel size so they stay sharp on high-DPI screens.
+- The ribbon's **Start** and **Stop** are enabled only when they apply.
+
 ## [0.3.1] - 2026-11-03
 
 A fix for AutoCAD without Architecture. 159 tools, unchanged.

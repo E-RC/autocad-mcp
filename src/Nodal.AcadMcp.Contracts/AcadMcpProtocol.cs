@@ -42,6 +42,9 @@ public static class AcadMcpProtocol
     public static string InstanceFile(int pid) =>
         System.IO.Path.Combine(InstanceDirectory, $"{pid}.json");
 
+    /// <summary>The project's home: source, releases, docs and issues.</summary>
+    public const string RepositoryUrl = "https://github.com/ed-fos/autocad-mcp";
+
     /// <summary>Where deploy.ps1 publishes the MCP server, and where the README tells a release install to put it.</summary>
     public static string DefaultServerPath => System.IO.Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),

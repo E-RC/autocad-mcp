@@ -1,5 +1,13 @@
 # Workflow validation status
 
+## 0.3.2, status window and ribbon, AutoCAD 2027 and ACA 2027, 2026-11-03
+
+In a disposable vanilla AutoCAD 2027 and a disposable ACA 2027, each started on its own from the release zip's bundle and server:
+
+- The 0.3.1 checks again: 159 tools, no load failures, the plain tools, and `aca_unavailable` from every ACA module on vanilla, with the ACA tools running in ACA.
+- Ribbon: Start, Stop and Status present with the new icons on the dark and the light theme; Start disabled and Stop enabled while the bridge listens, the reverse once it stops.
+- Status window from the Status button's command, `NODALMCP`: one window however often it is opened. Its Stop and Start buttons stopped and restarted the bridge (instance file removed, then written with a new token), and the window, the ribbon and `acad_status` agreed after each. A typed `NODALMCPSTOP` updated the open window at once. Copy path put the server path on the clipboard. Close closed it.
+
 ## 0.3.1, native checks on AutoCAD 2027 and ACA 2027, 2026-11-03
 
 Each product was started on its own in a disposable instance, with no other AutoCAD open, through the deployed add-in and the server's command-line mode, with 15-second timeouts:
