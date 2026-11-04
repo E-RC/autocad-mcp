@@ -1,5 +1,13 @@
 # Workflow validation status
 
+## 0.3.1, native checks on AutoCAD 2027 and ACA 2027, 2026-11-03
+
+Each product was started on its own in a disposable instance, with no other AutoCAD open, through the deployed add-in and the server's command-line mode, with 15-second timeouts:
+
+- Vanilla AutoCAD 2027 (`/product ACAD`). Before the fix: the add-in DLL loaded, but `NODALMCPSTART` was an unknown command and there was no ribbon panel. After: the bridge opened from a startup script; 159 tools and no load failures in `acad_status`, `tools` and `NODALMCPSTATUS`; the ribbon panel on the Add-ins tab; every top-level class in the add-in loaded. Lines, circles, text, `query_entities`, the projection symbol, a centre mark, `check_drafting`, `validate_model`, `export_drawing_preview`, `run_lisp` and `run_csharp` all worked. One read-only or mutating tool from each ACA module answered `aca_unavailable`.
+- ACA 2027 (Aec Model template). The same checks, with the ACA tools running instead. `create_curtain_wall`, `create_window_assembly` and `create_railing` resolved the Standard style through the changed style lookup, and an unknown style was refused with `style_not_found`. The 0.3.0 checks below (roofs and slabs from roofs, arc slabs, tags, openings, symbols, `check_drafting`, `read_pdf_page`) gave the same results.
+- The same two runs from the release zip's bundle and server.
+
 ## 0.3.0, native checks on ACA 2027, 2026-10-30
 
 Each was run in a disposable ACA 2027 instance, started from the Aec Model (Imperial Ctb) template with no other AutoCAD open, through the deployed add-in and the server's command-line mode, with 15-second timeouts:

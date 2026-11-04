@@ -150,6 +150,8 @@ cache that, so you may need to reconnect the server or restart the client to see
 
 | Symptom | Cause |
 |---|---|
+| `Unknown command "NODALMCPSTART"` on AutoCAD without Architecture, and no **Nodal MCP** panel | Versions up to 0.3.0 failed to start on vanilla AutoCAD. Install 0.3.1 or later. |
+| Some tools missing, or `NODALMCPSTATUS` says part of the add-in failed to load | It lists each part that failed and why; `acad_status` returns the same as `loadFailures`. Please report it with that text. |
 | `Unknown command "NODALMCPSTART"` | The bundle did not load. Check it is at `%APPDATA%\Autodesk\ApplicationPlugins\Nodal.AcadMcp.bundle`, that the zip was unblocked *before* extracting, and that `PackageContents.xml` says `LoadOnAutoCADStartup="true"`. As a fallback, `NETLOAD` the add-in DLL directly. |
 | No **Nodal MCP** ribbon panel | The ribbon is cosmetic and fails silently by design. Check the **Add-ins** tab is enabled; if the Add-ins tab is absent the panel is placed on a **Nodal** tab instead. The commands work either way. |
 | Only `acad_bridge_unavailable` is listed | The bridge is not open in any AutoCAD. Run `NODALMCPSTATUS`. |

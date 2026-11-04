@@ -10,6 +10,22 @@ year is a retarget rather than a feature bump.
 
 ## [Unreleased]
 
+### Fixed
+- On vanilla AutoCAD 2027 the add-in loaded but registered nothing: no **Nodal MCP** ribbon
+  panel, and `NODALMCPSTART` was an unknown command. One ACA module named an ACA type in a
+  generic constraint. The runtime resolves that when the class loads, not when the method runs,
+  so the class could not load where the ACA assemblies are absent. The error escaped the add-in's
+  `Initialize`, and AutoCAD then drops the add-in's commands without a message. On vanilla
+  AutoCAD all 159 tools now register, and the ACA tools answer `aca_unavailable`, as documented.
+  Every release up to 0.3.0 had this fault.
+
+### Changed
+- Each tool module registers on its own, so a module that cannot load costs only its own tools
+  instead of all of them. Anything that failed to load is listed by `NODALMCPSTART`,
+  `NODALMCPSTATUS` and `acad_status` (`loadFailures`, empty when everything loaded).
+- A unit test reads the add-in's source and fails when a generic constraint or a base type names
+  an ACA type, so this cannot come back unnoticed. It runs in CI.
+
 ## [0.3.0] - 2026-10-30
 
 Lessons from 2D drafting, mechanical and ACA modeling work, mostly about reaching the model
