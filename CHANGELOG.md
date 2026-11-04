@@ -10,6 +10,10 @@ year is a retarget rather than a feature bump.
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-11-03
+
+A fix for AutoCAD without Architecture. 159 tools, unchanged.
+
 ### Fixed
 - On vanilla AutoCAD 2027 the add-in loaded but registered nothing: no **Nodal MCP** ribbon
   panel, and `NODALMCPSTART` was an unknown command. One ACA module named an ACA type in a
