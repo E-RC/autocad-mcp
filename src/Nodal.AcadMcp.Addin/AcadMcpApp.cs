@@ -28,12 +28,38 @@ namespace Nodal.AcadMcp.Addin;
 /// </summary>
 public sealed class AcadMcpApp : IExtensionApplication
 {
+    private static readonly List<string> Failures = [];
+
+    /// <summary>What failed while the add-in loaded, one line each. Empty when everything loaded.</summary>
+    internal static IReadOnlyList<string> LoadFailures => Failures;
+
+    /// <summary>
+    /// Nothing may escape from here. When Initialize throws, AutoCAD keeps the DLL loaded but
+    /// registers none of its commands and says nothing: no ribbon panel, and NODALMCPSTART is an
+    /// unknown command. So each step is guarded on its own, and whatever failed is reported by
+    /// NODALMCPSTART, NODALMCPSTATUS and acad_status instead.
+    /// </summary>
     public void Initialize()
     {
-        MainThread.Start();
-        ToolRegistry.RegisterAll();
-        RibbonSupport.Install();
+        Guard("main thread", MainThread.Start);
+        Guard("tool registry", ToolRegistry.RegisterAll);
+        Guard("ribbon", RibbonSupport.Install);
+
+        if (Failures.Count > 0)
+            AcApp.DocumentManager.MdiActiveDocument?.Editor.WriteMessage(
+                $"\nNodal AcadMcp: part of the add-in failed to load. NODALMCPSTATUS lists what.\n");
     }
+
+    internal static void Guard(string what, Action step)
+    {
+        try { step(); }
+        catch (System.Exception ex) { Failures.Add($"{what}: {ex.GetType().Name}: {ex.Message}"); }
+    }
+
+    /// <summary>Empty when everything loaded; otherwise says which tools are missing and why.</summary>
+    private static string FailureNote() => Failures.Count == 0 ? string.Empty :
+        $"  {Failures.Count} part(s) of the add-in failed to load, so their tools are missing:\n" +
+        string.Concat(Failures.Select(f => $"    {f}\n"));
 
     public void Terminate()
     {
@@ -63,7 +89,7 @@ public sealed class AcadMcpApp : IExtensionApplication
                   $"({Router.List().Count} tools).{note}\n" +
                   "  This session can now be driven by an MCP client, including run_csharp and\n" +
                   "  run_lisp, which execute arbitrary code. NODALMCPSTOP closes it.\n" +
-                  ConnectionNote());
+                  FailureNote() + ConnectionNote());
         }
         catch (System.Exception ex)
         {
@@ -89,8 +115,8 @@ public sealed class AcadMcpApp : IExtensionApplication
     {
         Write(HttpBridge.IsRunning
             ? $"\nNodal AcadMcp: listening on port {HttpBridge.Port}, " +
-              $"{Router.List().Count} tools registered, pid {Environment.ProcessId}.\n" + ConnectionNote()
-            : "\nNodal AcadMcp: stopped. NODALMCPSTART opens the bridge for this session.\n");
+              $"{Router.List().Count} tools registered, pid {Environment.ProcessId}.\n" + FailureNote() + ConnectionNote()
+            : "\nNodal AcadMcp: stopped. NODALMCPSTART opens the bridge for this session.\n" + FailureNote());
     }
 
     /// <summary>

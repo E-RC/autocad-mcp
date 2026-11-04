@@ -62,6 +62,15 @@ tools and `run_csharp` are compiled out, because those references are probed fro
 install directory. So CI can syntax-check the non-ACA half and nothing more; anything touching
 the 79 ACA tools has to be built and tested on a machine with AutoCAD Architecture 2027.
 
+The DLL built there is also the one that runs on vanilla AutoCAD, where the ACA assemblies do
+not exist. Naming an ACA type inside a method is safe: the runtime resolves it only when that
+method runs, and the ACA tools call `AcaSupport.Require()` first. Naming one where the class
+itself needs it is not, because then the class cannot load and none of its tools register. That
+means no ACA type in a generic constraint (`where T : AecSomething`), as a base type, or as the
+type of a field when it is an ACA enum or struct. Constrain to the AutoCAD base type (`DBObject`,
+`Entity`) and check the ACA type with `is` inside the method. `AcaLoadSafetyTests` checks
+constraints and base types; only a vanilla AutoCAD run catches the fields.
+
 ## Testing against a live AutoCAD
 
 **A second AutoCAD on the same desktop is not isolated from the first.** A throwaway test
@@ -78,6 +87,8 @@ So, for any test that drives a real AutoCAD:
   MCP client) so nothing else picks the test session up as the newest bridge.
 - Back up the installed bundle before deploying a test build, and restore it byte-for-byte
   afterwards.
+- Test in vanilla AutoCAD as well as ACA: `acad.exe /product ACAD` on a machine that has both.
+  `NODALMCPSTATUS` and `acad_status` should report 159 tools and no load failures in each.
 
 ## Licence
 

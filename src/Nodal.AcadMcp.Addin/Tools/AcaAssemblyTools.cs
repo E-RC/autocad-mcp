@@ -854,10 +854,14 @@ internal static class AcaAssemblyTools
     /// Resolve a style by name, or fall back to the drawing's Standard style, and REFUSE to return
     /// an id whose record is not the exact style class for the object being built. Assigning a
     /// foreign style id is the one mistake that makes an AEC object structurally invalid.
+    ///
+    /// Constrained to DBObject, not AecRecord, on purpose: the runtime loads a generic method's
+    /// constraint types when it loads the CLASS, not the method. Naming an Aec type here made
+    /// this whole class fail to load on vanilla AutoCAD, which took every tool down with it.
     /// </summary>
     private static ObjectId ResolveStyle<TStyle>(
         AcadContext ctx, AecDict dict, string? name, Func<ObjectId> standard, string kind)
-        where TStyle : AecRecord
+        where TStyle : DBObject
     {
         ObjectId id;
 

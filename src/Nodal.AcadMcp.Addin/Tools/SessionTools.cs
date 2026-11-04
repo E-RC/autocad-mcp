@@ -10,7 +10,8 @@ internal static class SessionTools
     internal static void Register()
     {
         Router.Register("acad_status",
-            "Version, profile, ACA availability and the active drawing's state.",
+            "Version, profile, ACA availability, any part of the add-in that failed to load "
+          + "(loadFailures), and the active drawing's state.",
             mutating: false,
             _ => MainThread.InvokeAsync<object?>(() =>
             {
@@ -26,6 +27,7 @@ internal static class SessionTools
                     acaAvailable = AcaSupport.IsAvailable,
                     bridgePort = HttpBridge.Port,
                     toolCount = Router.List().Count,
+                    loadFailures = AcadMcpApp.LoadFailures,
                     openDocuments = CountDocuments(docs),
                     active = active is null ? null : new
                     {
