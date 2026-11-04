@@ -27,6 +27,8 @@ internal static class RibbonSupport
     private const string PanelTitle = "Nodal MCP";
 
     private static bool _built;
+    private static RibbonButton? _startButton;
+    private static RibbonButton? _stopButton;
 
     /// <summary>
     /// Safe to call from Initialize(). Never throws: a missing or disabled ribbon must not stop
@@ -91,19 +93,33 @@ internal static class RibbonSupport
 
         var source = new RibbonPanelSource { Title = PanelTitle, Id = PanelSourceId };
 
-        source.Items.Add(Button("Start", "NODALMCPSTART", Icons.Play,
+        _startButton = Button("Start", "NODALMCPSTART", Icons.Play,
             "Open the MCP bridge for this AutoCAD session.\n\n" +
             "This lets an MCP client drive AutoCAD, including tools that execute arbitrary " +
-            "code. It is deliberately not opened automatically."));
+            "code. It is deliberately not opened automatically.");
+        source.Items.Add(_startButton);
 
-        source.Items.Add(Button("Stop", "NODALMCPSTOP", Icons.Stop,
-            "Close the bridge and invalidate this session's token."));
+        _stopButton = Button("Stop", "NODALMCPSTOP", Icons.Stop,
+            "Close the bridge and invalidate this session's token.");
+        source.Items.Add(_stopButton);
 
-        source.Items.Add(Button("Status", "NODALMCPSTATUS", Icons.Status,
-            "Report whether the bridge is listening, and on which port."));
+        source.Items.Add(Button("Status", "NODALMCP", Icons.Status,
+            "Open the status window: whether the bridge is listening, how to connect an agent, " +
+            "and Start and Stop."));
 
         tab.Panels.Add(new RibbonPanel { Source = source });
         _built = true;
+
+        // Only the action that applies is enabled, and it follows the bridge however it was
+        // started or stopped: these buttons, a typed command, or the status window.
+        HttpBridge.StateChanged += ShowBridgeState;
+        ShowBridgeState();
+    }
+
+    private static void ShowBridgeState()
+    {
+        if (_startButton is not null) _startButton.IsEnabled = !HttpBridge.IsRunning;
+        if (_stopButton is not null) _stopButton.IsEnabled = HttpBridge.IsRunning;
     }
 
     /// <summary>
@@ -168,56 +184,87 @@ internal static class RibbonSupport
     }
 
     /// <summary>
-    /// Icons are drawn in code rather than shipped as resources: three flat glyphs do not
-    /// justify binary assets, and drawing them means they scale to whatever size the ribbon
-    /// asks for. Colours are picked to read on both the light and dark AutoCAD themes.
+    /// Icons are drawn in code rather than shipped as resources: three glyphs do not justify
+    /// binary assets, and drawing them means they scale to whatever size is asked for.
+    ///
+    /// Each is a round badge in a Nodal palette colour carrying a white glyph. The badge brings
+    /// its own contrast, so one bitmap reads on AutoCAD's light and dark ribbons alike, where a
+    /// bare coloured glyph is always too faint on one of them. A rim a shade darker than the
+    /// badge keeps its edge crisp on a light ribbon. Bitmaps are rendered at twice their size
+    /// in pixels, so they stay sharp on high-DPI screens.
     /// </summary>
-    private static class Icons
+    internal static class Icons
     {
-        private static readonly Brush Green = Frozen(Color.FromRgb(0x3C, 0xA8, 0x4B));
-        private static readonly Brush Red = Frozen(Color.FromRgb(0xC7, 0x3E, 0x3E));
-        private static readonly Brush Blue = Frozen(Color.FromRgb(0x2F, 0x7C, 0xC4));
+        // Top and bottom of each badge's gradient, then its rim.
+        private static readonly Color[] Green = [Rgb(0x45, 0xC9, 0x8F), Rgb(0x26, 0xA0, 0x6B), Rgb(0x1B, 0x7F, 0x54)];
+        private static readonly Color[] Red = [Rgb(0xEF, 0x62, 0x66), Rgb(0xD6, 0x3A, 0x40), Rgb(0xA9, 0x2B, 0x30)];
+        private static readonly Color[] Blue = [Rgb(0x4A, 0x80, 0xE6), Rgb(0x25, 0x59, 0xC2), Rgb(0x1C, 0x46, 0x9C)];
 
-        internal static BitmapSource Play(int size) => Render(size, (dc, s) =>
+        internal static BitmapSource Play(int size) => Badge(size, Green, (dc, s, white) =>
         {
-            // Right-pointing triangle, inset so it does not touch the edges at 16px.
+            // Rounded by stroking the filled triangle with a round-joined pen of the same white.
+            // Its centroid sits a touch right of centre, where a play triangle looks centred.
             var g = new StreamGeometry();
             using (var c = g.Open())
             {
-                c.BeginFigure(new Point(s * 0.28, s * 0.20), true, true);
-                c.LineTo(new Point(s * 0.80, s * 0.50), true, true);
-                c.LineTo(new Point(s * 0.28, s * 0.80), true, true);
+                c.BeginFigure(new Point(s * 0.41, s * 0.31), true, true);
+                c.LineTo(new Point(s * 0.71, s * 0.50), true, true);
+                c.LineTo(new Point(s * 0.41, s * 0.69), true, true);
             }
             g.Freeze();
-            dc.DrawGeometry(Green, null, g);
+            dc.DrawGeometry(white, RoundPen(white, s * 0.08), g);
         });
 
-        internal static BitmapSource Stop(int size) => Render(size, (dc, s) =>
-            dc.DrawRectangle(Red, null, new Rect(s * 0.26, s * 0.26, s * 0.48, s * 0.48)));
+        internal static BitmapSource Stop(int size) => Badge(size, Red, (dc, s, white) =>
+            dc.DrawRoundedRectangle(white, null, new Rect(s * 0.34, s * 0.34, s * 0.32, s * 0.32), s * 0.06, s * 0.06));
 
-        internal static BitmapSource Status(int size) => Render(size, (dc, s) =>
+        /// <summary>A pulse line: the bridge's state at a glance.</summary>
+        internal static BitmapSource Status(int size) => Badge(size, Blue, (dc, s, white) =>
         {
-            // Ring plus a centred dot: reads as an indicator lamp at 16px.
-            var pen = new Pen(Blue, Math.Max(1.0, s * 0.10));
+            var g = new StreamGeometry();
+            using (var c = g.Open())
+            {
+                c.BeginFigure(new Point(s * 0.22, s * 0.53), false, false);
+                c.PolyLineTo(
+                [
+                    new Point(s * 0.37, s * 0.53), new Point(s * 0.45, s * 0.33), new Point(s * 0.56, s * 0.70),
+                    new Point(s * 0.64, s * 0.53), new Point(s * 0.78, s * 0.53),
+                ], true, true);
+            }
+            g.Freeze();
+            dc.DrawGeometry(null, RoundPen(white, s * 0.085), g);
+        });
+
+        private static Color Rgb(byte r, byte g, byte b) => Color.FromRgb(r, g, b);
+
+        private static Pen RoundPen(Brush brush, double thickness)
+        {
+            var pen = new Pen(brush, thickness)
+            {
+                StartLineCap = PenLineCap.Round,
+                EndLineCap = PenLineCap.Round,
+                LineJoin = PenLineJoin.Round,
+            };
             pen.Freeze();
-            var centre = new Point(s * 0.5, s * 0.5);
-            dc.DrawEllipse(null, pen, centre, s * 0.30, s * 0.30);
-            dc.DrawEllipse(Blue, null, centre, s * 0.11, s * 0.11);
-        });
-
-        private static Brush Frozen(Color c)
-        {
-            var b = new SolidColorBrush(c);
-            b.Freeze();
-            return b;
+            return pen;
         }
 
-        private static BitmapSource Render(int size, Action<DrawingContext, double> draw)
+        private static BitmapSource Badge(int size, Color[] colours, Action<DrawingContext, double, Brush> glyph)
         {
-            var visual = new DrawingVisual();
-            using (var dc = visual.RenderOpen()) draw(dc, size);
+            var fill = new LinearGradientBrush(colours[0], colours[1], 90);
+            fill.Freeze();
+            var rim = new Pen(new SolidColorBrush(colours[2]), size / 32.0);
+            rim.Freeze();
 
-            var bmp = new RenderTargetBitmap(size, size, 96, 96, PixelFormats.Pbgra32);
+            var visual = new DrawingVisual();
+            using (var dc = visual.RenderOpen())
+            {
+                dc.DrawEllipse(fill, rim, new Point(size * 0.5, size * 0.5), size * 0.46, size * 0.46);
+                glyph(dc, size, Brushes.White);
+            }
+
+            // 192 dpi: twice the pixels, the same size on screen.
+            var bmp = new RenderTargetBitmap(size * 2, size * 2, 192, 192, PixelFormats.Pbgra32);
             bmp.Render(visual);
             bmp.Freeze();   // the ribbon reads these off its own thread
             return bmp;

@@ -56,6 +56,22 @@ internal static class HttpBridge
     internal static int Port { get; private set; }
     internal static bool IsRunning => _listener is not null;
 
+    /// <summary>When the bridge last started, local time; null while it is stopped.</summary>
+    internal static DateTime? StartedAt { get; private set; }
+
+    /// <summary>
+    /// Raised after every start and stop, whichever command, button or window caused it, so the
+    /// ribbon and the status window always show the real state. Start and Stop run on AutoCAD's
+    /// main thread, so handlers do too.
+    /// </summary>
+    internal static event Action? StateChanged;
+
+    private static void RaiseStateChanged()
+    {
+        // A display that fails to refresh must never fail a start or a stop.
+        try { StateChanged?.Invoke(); } catch { }
+    }
+
     /// <summary>Per-session shared secret. Regenerated on every Start; never logged.</summary>
     private static string _token = string.Empty;
 
@@ -107,6 +123,9 @@ internal static class HttpBridge
         // the thread pool, and a fast START/STOP would have it dereference a null _cts.
         var ct = _cts.Token;
         _ = Task.Run(() => AcceptLoop(listener, ct));
+
+        StartedAt = DateTime.Now;
+        RaiseStateChanged();
     }
 
     internal static void Stop()
@@ -117,8 +136,10 @@ internal static class HttpBridge
         _cts = null;
         Port = 0;
         _token = string.Empty;
+        StartedAt = null;
 
         try { File.Delete(AcadMcpProtocol.InstanceFile(Environment.ProcessId)); } catch { }
+        RaiseStateChanged();
     }
 
     // ------------------------------------------------------------------ instance discovery

@@ -58,7 +58,9 @@ public sealed class AcadMcpApp : IExtensionApplication
 
     /// <summary>Empty when everything loaded; otherwise says which tools are missing and why.</summary>
     private static string FailureNote() => Failures.Count == 0 ? string.Empty :
-        $"  {Failures.Count} part(s) of the add-in failed to load, so their tools are missing:\n" +
+        (Failures.Count == 1
+            ? "  1 part of the add-in failed to load, so its tools are missing:\n"
+            : $"  {Failures.Count} parts of the add-in failed to load, so their tools are missing:\n") +
         string.Concat(Failures.Select(f => $"    {f}\n"));
 
     public void Terminate()
@@ -68,13 +70,20 @@ public sealed class AcadMcpApp : IExtensionApplication
     }
 
     [CommandMethod("NODALMCPSTART")]
-    public void StartCommand()
+    public void StartCommand() => Write(StartBridge());
+
+    [CommandMethod("NODALMCPSTOP")]
+    public void StopCommand() => Write(StopBridge());
+
+    /// <summary>The status window, which the ribbon's Status button opens. NODALMCPSTATUS stays text, for scripts and agents.</summary>
+    [CommandMethod("NODALMCP")]
+    public void WindowCommand() => StatusWindow.ShowOrActivate();
+
+    /// <summary>Opens the bridge and returns what to tell the user. NODALMCPSTART and the status window share it.</summary>
+    internal static string StartBridge()
     {
         if (HttpBridge.IsRunning)
-        {
-            Write($"\nNodal AcadMcp: already listening on port {HttpBridge.Port}.\n");
-            return;
-        }
+            return $"\nNodal AcadMcp: already listening on port {HttpBridge.Port}.\n";
 
         try
         {
@@ -85,29 +94,26 @@ public sealed class AcadMcpApp : IExtensionApplication
                 : $"\n  (port {AcadMcpProtocol.DefaultPort} was taken, so this session took {HttpBridge.Port};" +
                   " the MCP server discovers it automatically.)";
 
-            Write($"\nNodal AcadMcp listening on {AcadMcpProtocol.BaseUrl(HttpBridge.Port)} " +
-                  $"({Router.List().Count} tools).{note}\n" +
-                  "  This session can now be driven by an MCP client, including run_csharp and\n" +
-                  "  run_lisp, which execute arbitrary code. NODALMCPSTOP closes it.\n" +
-                  FailureNote() + ConnectionNote());
+            return $"\nNodal AcadMcp listening on {AcadMcpProtocol.BaseUrl(HttpBridge.Port)} " +
+                   $"({Router.List().Count} tools).{note}\n" +
+                   "  This session can now be driven by an MCP client, including run_csharp and\n" +
+                   "  run_lisp, which execute arbitrary code. NODALMCPSTOP closes it.\n" +
+                   FailureNote() + ConnectionNote();
         }
         catch (System.Exception ex)
         {
-            Write($"\nNodal AcadMcp failed to start: {ex.Message}\n");
+            return $"\nNodal AcadMcp failed to start: {ex.Message}\n";
         }
     }
 
-    [CommandMethod("NODALMCPSTOP")]
-    public void StopCommand()
+    /// <summary>Closes the bridge and returns what to tell the user. NODALMCPSTOP and the status window share it.</summary>
+    internal static string StopBridge()
     {
         if (!HttpBridge.IsRunning)
-        {
-            Write("\nNodal AcadMcp: not running.\n");
-            return;
-        }
+            return "\nNodal AcadMcp: not running.\n";
 
         HttpBridge.Stop();
-        Write("\nNodal AcadMcp stopped. The session token is now invalid.\n");
+        return "\nNodal AcadMcp stopped. The session token is now invalid.\n";
     }
 
     [CommandMethod("NODALMCPSTATUS")]
