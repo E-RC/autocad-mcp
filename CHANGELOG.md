@@ -10,6 +10,10 @@ year is a retarget rather than a feature bump.
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-11-03
+
+A status window and new ribbon icons. 159 tools, unchanged.
+
 ### Added
 - A status window, opened by the ribbon's **Status** button or the `NODALMCP` command. It shows
   whether the bridge is listening, this session's address, uptime, tool count, AutoCAD
