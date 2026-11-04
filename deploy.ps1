@@ -1,11 +1,11 @@
 <#
-    Nodal.AcadMcp deploy
+    NodARCH.AcadMcp deploy
     --------------------
     Builds BOTH halves and installs them locally:
 
       * the add-in, as an AutoCAD autoloader bundle in %APPDATA%, so AutoCAD finds it
         without a manual NETLOAD
-      * the MCP server, published to %LOCALAPPDATA%\Nodal.AcadMcp\server, which is the
+      * the MCP server, published to %LOCALAPPDATA%\NodARCH.AcadMcp\server, which is the
         path you point your MCP client at
 
     The bundle keeps its payload in a VERSIONED Contents subfolder (the same pattern
@@ -16,7 +16,7 @@
       * the next AutoCAD start picks up the new build automatically
 
     The manifest sets LoadOnAutoCADStartup="false" on purpose. The bridge executes
-    arbitrary code, so it is opt-in per session: type NODALMCPSTART in AutoCAD.
+    arbitrary code, so it is opt-in per session: type NODARCHSTART in AutoCAD.
 
     Runs on Windows PowerShell 5.1 (which ships with Windows) as well as pwsh 7.
 
@@ -41,11 +41,11 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $root        = Split-Path -Parent $MyInvocation.MyCommand.Path
-$addinProj   = Join-Path $root 'src\Nodal.AcadMcp.Addin\Nodal.AcadMcp.Addin.csproj'
-$serverProj  = Join-Path $root 'src\Nodal.AcadMcp.Server\Nodal.AcadMcp.Server.csproj'
-$bundleName  = 'Nodal.AcadMcp.bundle'
+$addinProj   = Join-Path $root 'src\NodARCH.AcadMcp.Addin\NodARCH.AcadMcp.Addin.csproj'
+$serverProj  = Join-Path $root 'src\NodARCH.AcadMcp.Server\NodARCH.AcadMcp.Server.csproj'
+$bundleName  = 'NodARCH.AcadMcp.bundle'
 $bundleRoot  = Join-Path $env:APPDATA "Autodesk\ApplicationPlugins\$bundleName"
-$serverRoot  = Join-Path $env:LOCALAPPDATA 'Nodal.AcadMcp\server'
+$serverRoot  = Join-Path $env:LOCALAPPDATA 'NodARCH.AcadMcp\server'
 $tfmAddin    = 'net10.0-windows'
 
 # ---------------------------------------------------------------- locate the SDK
@@ -108,15 +108,15 @@ if (-not $NoBuild) {
 $buildDir = if ($FromDir) {
     $FromDir
 } else {
-    Join-Path $root ('src\Nodal.AcadMcp.Addin\bin\' + $Configuration + '\' + $tfmAddin)
+    Join-Path $root ('src\NodARCH.AcadMcp.Addin\bin\' + $Configuration + '\' + $tfmAddin)
 }
-if (-not (Test-Path (Join-Path $buildDir 'Nodal.AcadMcp.Addin.dll'))) {
+if (-not (Test-Path (Join-Path $buildDir 'NodARCH.AcadMcp.Addin.dll'))) {
     throw "No build output at $buildDir. Run without -NoBuild first."
 }
 
 # ---------------------------------------------------------------- versioned payload
 # File-time based so every deploy is a fresh folder even within the same minute.
-$stamp       = (Get-Item (Join-Path $buildDir 'Nodal.AcadMcp.Addin.dll')).LastWriteTime.ToString('yyyyMMdd-HHmmss')
+$stamp       = (Get-Item (Join-Path $buildDir 'NodARCH.AcadMcp.Addin.dll')).LastWriteTime.ToString('yyyyMMdd-HHmmss')
 $contentsRel = "Contents/$stamp"
 $contentsAbs = Join-Path $bundleRoot "Contents\$stamp"
 
@@ -137,11 +137,11 @@ $manifest = @"
   SchemaVersion="1.0"
   AppVersion="$stamp"
   Author="Ed Foster"
-  Name="Nodal AcadMcp"
-  ProductCode="{7E2C9A14-6B3D-4F58-9C21-0A5E4D8B7F36}"
-  UpgradeCode="{2B8F41D7-5C6A-4E39-BD02-9F7A3C1E6D84}"
-  Description="Nodal MCP bridge for AutoCAD and AutoCAD Architecture">
-  <CompanyDetails Name="Nodal" Url="https://github.com/ed-fos/autocad-mcp" Email="" />
+  Name="NodARCH AcadMcp"
+  ProductCode="{43178BE6-5A9B-4A91-A943-90362211CBBA}"
+  UpgradeCode="{28CB6653-701C-46B2-9D7D-3DD485B4DBD9}"
+  Description="NodARCH MCP bridge for AutoCAD and AutoCAD Architecture">
+  <CompanyDetails Name="NodARCH" Url="https://github.com/ed-fos/autocad-mcp" Email="" />
   <RuntimeRequirements Platform="AutoCAD|ADT" SeriesMin="R26.0" SeriesMax="R26.0"
                        OS="Win64" SupportPath="./$contentsRel" />
   <Components>
@@ -152,16 +152,16 @@ $manifest = @"
          LoadOnAutoCADStartup is TRUE, and that is not a security regression — loading the
          module is not the same as opening the bridge. Initialize() registers commands and the
          ribbon and opens NO socket; the endpoint that executes arbitrary code stays shut until
-         the user clicks Start or types NODALMCPSTART.
+         the user clicks Start or types NODARCHSTART.
 
          It was briefly FALSE, mirroring Autodesk's own MCP bundle, and that was tested and
-         found broken: with the module unloaded AutoCAD does not know NODALMCPSTART exists, so
+         found broken: with the module unloaded AutoCAD does not know NODARCHSTART exists, so
          the very command meant to demand-load it reports "Unknown command" and a clean install
          cannot be started at all. Demand-loading a command needs the command declared in this
          manifest; loading at startup and withholding the socket is simpler and safer. -->
     <ComponentEntry
-      AppName="NodalAcadMcp"
-      ModuleName="./$contentsRel/Nodal.AcadMcp.Addin.dll"
+      AppName="NodARCHAcadMcp"
+      ModuleName="./$contentsRel/NodARCH.AcadMcp.Addin.dll"
       LoadOnAutoCADStartup="true"
       LoadOnRequest="true" />
   </Components>
@@ -216,7 +216,7 @@ if ($Package) {
               (Join-Path $root 'NOTICE'), (Join-Path $root 'SECURITY.md'),
               (Join-Path $root 'CHANGELOG.md') -Destination $stage -Force
 
-    $zip = Join-Path $distDir "Nodal.AcadMcp-acad2027-$stamp.zip"
+    $zip = Join-Path $distDir "NodARCH.AcadMcp-acad2027-$stamp.zip"
     if (Test-Path $zip) { Remove-Item $zip -Force }
 
     # The entry paths are built by hand, on purpose. The ZIP format requires '/' as the path
@@ -226,7 +226,7 @@ if ($Package) {
     #   * ZipFile.CreateFromDirectory, because .NET Framework builds entry names with
     #     Path.DirectorySeparatorChar (fixed only in .NET Core 3.0+)
     # Explorer is lenient about it, but plenty of extractors are not: they produce one flat
-    # directory of files literally named "server\Nodal.AcadMcp.Server.exe", at which point the
+    # directory of files literally named "server\NodARCH.AcadMcp.Server.exe", at which point the
     # install instructions ("copy the bundle folder") have no folder to copy. Verified by
     # inspecting the entry names of a built zip, not assumed.
     Add-Type -AssemblyName System.IO.Compression.FileSystem
@@ -260,5 +260,5 @@ if ($Package) {
 
 Write-Host ""
 Write-Host "Deployed. Pruned $pruned old payload(s); $kept still locked by a running AutoCAD." -ForegroundColor Cyan
-Write-Host "Restart AutoCAD, then type NODALMCPSTART to open the bridge for that session." -ForegroundColor Cyan
-Write-Host "Point your MCP client at: $serverRoot\Nodal.AcadMcp.Server.exe" -ForegroundColor Cyan
+Write-Host "Restart AutoCAD, then type NODARCHSTART to open the bridge for that session." -ForegroundColor Cyan
+Write-Host "Point your MCP client at: $serverRoot\NodARCH.AcadMcp.Server.exe" -ForegroundColor Cyan

@@ -4,11 +4,11 @@
     <LangVersion>latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <PlatformTarget>x64</PlatformTarget>
-    <Company>Nodal</Company>
-    <Product>Nodal AcadMcp</Product>
-    <Authors>Ed Foster</Authors>
-    <Version>0.3.2</Version>
-    <Copyright>Copyright © 2026 Ed Foster</Copyright>
+    <Company>Archiplan</Company>
+    <Product>NodARCH AcadMcp</Product>
+    <Authors>Ed Foster; Archiplan</Authors>
+    <Version>0.3.2-nodarch.1</Version>
+    <Copyright>Copyright © 2026 Ed Foster. Modifications Copyright © 2026 Archiplan</Copyright>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <RepositoryType>git</RepositoryType>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
@@ -27,7 +27,7 @@
   <!-- Fail loudly rather than silently resolving the wrong AutoCAD.NET package: an unmapped
        AcadVersion would otherwise fall through to an empty version string. -->
   <Target Name="ValidateAcadVersion" BeforeTargets="PrepareForBuild"
-          Condition="'$(AcadNetPackageVersion)' == '' and '$(MSBuildProjectName)' == 'Nodal.AcadMcp.Addin'">
+          Condition="'$(AcadNetPackageVersion)' == '' and '$(MSBuildProjectName)' == 'NodARCH.AcadMcp.Addin'">
     <Error Text="AcadVersion '$(AcadVersion)' has no AutoCAD.NET package mapping. Only 2027 is supported today; see Directory.Build.props." />
   </Target>
 </Project>

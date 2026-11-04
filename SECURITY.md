@@ -5,7 +5,7 @@ reasons are specific rather than boilerplate.
 
 ## What this thing actually is
 
-Nodal.AcadMcp puts an HTTP endpoint **inside your running AutoCAD process** and lets a
+NodARCH.AcadMcp puts an HTTP endpoint **inside your running AutoCAD process** and lets a
 language model drive it. Three of its 159 tools are unsandboxed code execution by design:
 
 | Tool | What it can do |
@@ -57,7 +57,7 @@ failure mode that turns a reasonable personal tool into an unreasonable publishe
   makes the request same-origin, so the reply is readable too. That is a full interactive
   shell driven from a web page, with your drawing contents coming back out.
 
-Four checks stand in front of dispatch ([`HttpRequestGuard`](src/Nodal.AcadMcp.Contracts/HttpRequestGuard.cs)):
+Four checks stand in front of dispatch ([`HttpRequestGuard`](src/NodARCH.AcadMcp.Contracts/HttpRequestGuard.cs)):
 
 1. **A per-session token.** Minted when the bridge starts, shared only through a file under
    `%LOCALAPPDATA%` (per-user, so another Windows account cannot read it). Compared in fixed
@@ -68,30 +68,30 @@ Four checks stand in front of dispatch ([`HttpRequestGuard`](src/Nodal.AcadMcp.C
    browser has to preflight — and the preflight fails, because no CORS headers are served.
 
 These are covered by regression tests in
-[`tests/Nodal.AcadMcp.Tests`](tests/Nodal.AcadMcp.Tests/HttpRequestGuardTests.cs). If you
+[`tests/NodARCH.AcadMcp.Tests`](tests/NodARCH.AcadMcp.Tests/HttpRequestGuardTests.cs). If you
 change `HttpRequestGuard`, those tests are the contract.
 
 ### The bridge is opt-in, per session
 
 The add-in loads when AutoCAD starts, but **loading is not listening**. `Initialize()` opens no
 socket and accepts no input — it registers the commands and the ribbon panel, nothing more.
-Nothing listens until you click **Start** on the Nodal MCP ribbon panel or type
-`NODALMCPSTART`. `NODALMCPSTOP` closes it and invalidates the token.
+Nothing listens until you click **Start** on the NodARCH MCP ribbon panel or type
+`NODARCHSTART`. `NODARCHSTOP` closes it and invalidates the token.
 
 The bundle briefly shipped `LoadOnAutoCADStartup="false"`, mirroring Autodesk's own MCP
 bundle, on the theory that not loading at all was stricter. Testing showed it simply breaks:
-with the module unloaded AutoCAD has no idea `NODALMCPSTART` exists, so the command meant to
+with the module unloaded AutoCAD has no idea `NODARCHSTART` exists, so the command meant to
 demand-load it reports *Unknown command* and a clean install cannot be started. Demand-loading
 a command requires declaring that command in the bundle manifest. Loading the module and
 withholding the socket achieves the same thing — no endpoint without deliberate action — and
 actually works.
 
 If you want the bridge itself up automatically, that is your call to make explicitly: put
-`NODALMCPSTART` in your `acaddoc.lsp`. The default will not do it for you.
+`NODARCHSTART` in your `acaddoc.lsp`. The default will not do it for you.
 
 ### The command-line client, the working rules and command-driving tools
 
-- **`Nodal.AcadMcp.Server.exe call`** reads the same per-user instance file and token as the MCP
+- **`NodARCH.AcadMcp.Server.exe call`** reads the same per-user instance file and token as the MCP
   server. It gives nothing to a process running as you that it could not already get by reading
   that file, but it does make the bridge a one-line call from any script, so treat the exe with
   the same care as the bridge. `guide` and `help` print fixed text and touch nothing.
@@ -127,7 +127,7 @@ Be clear-eyed about the residual risk:
 
 - Run it against **scratch drawings**, or a copy, not a live deliverable — especially while
   you are learning what a model does with 159 tools.
-- Keep `NODALMCPSTOP` in mind: close the bridge when you are not actively using it.
+- Keep `NODARCHSTOP` in mind: close the bridge when you are not actively using it.
 - Do not run it on a machine that handles drawings you cannot afford to lose or leak.
 - Treat it as **alpha**. It is one person's tool, published in case it is useful.
 

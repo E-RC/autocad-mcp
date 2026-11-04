@@ -23,7 +23,7 @@ def main():
 
     def call(name, args, expected_error=None):
         request = urllib.request.Request(f"http://127.0.0.1:{instance['port']}/{name}",
-            data=json.dumps(args).encode(), headers={"Content-Type": "application/json", "X-Nodal-Token": instance["token"]})
+            data=json.dumps(args).encode(), headers={"Content-Type": "application/json", "X-NodARCH-Token": instance["token"]})
         with urllib.request.urlopen(request, timeout=90) as response:
             envelope = json.load(response)
         # Keep the failing envelope too, so native failures remain diagnosable.
